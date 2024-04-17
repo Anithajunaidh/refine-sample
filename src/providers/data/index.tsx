@@ -1,38 +1,86 @@
-import graphqlDataProvider,
-{
+// import graphqlDataProvider,
+// {
+//     GraphQLClient,
+//     liveProvider as graphqlLiveProvider
+// }
+//     from "@refinedev/nestjs-query";
+// import { fetchWrapper } from "./fetch-wrapper";
+// import { createClient } from "graphql-ws";
+
+// export const API_BASE_URL = "https://api.crm.refine.dev";
+// export const API_URL = `${API_BASE_URL}/graphql`;
+// export const WS_URL = 'wss://api.crm.refine.dev/graphql'
+
+// export const client = new GraphQLClient(API_URL, {
+//     fetch: (url: string, options: RequestInit) => {
+//         try {
+//             return fetchWrapper(url, options)
+//         } catch (error) {
+//             return Promise.reject(error as Error)
+//         }
+//     }
+// })
+
+// export const wsClient = typeof window !== "undefined" ? createClient({
+//     url: WS_URL,
+//     connectionParams: () => {
+//         const accessToken = localStorage.getItem("access_token");
+//         return {
+//             headers: {
+//                 Authorization: `Bearer ${accessToken}`,
+
+//             }
+//         }
+//     }
+// }) : undefined
+
+// export const dataProvider = graphqlDataProvider(client);
+// export const liveProvider = wsClient ? graphqlLiveProvider(wsClient) : undefined;
+
+import graphqlDataProvider, {
     GraphQLClient,
-    liveProvider as graphqlLiveProvider
-}
-    from "@refinedev/nestjs-query";
-import { fetchWrapper } from "./fetch-wrapper";
+    liveProvider as graphqlLiveProvider,
+} from "@refinedev/nestjs-query";
+
 import { createClient } from "graphql-ws";
+
+import { axiosInstance } from "./axios";
 
 export const API_BASE_URL = "https://api.crm.refine.dev";
 export const API_URL = `${API_BASE_URL}/graphql`;
-export const WS_URL = 'wss://api.crm.refine.dev/graphql'
+export const WS_URL = "wss://api.crm.refine.dev/graphql";
 
 export const client = new GraphQLClient(API_URL, {
-    fetch: (url: string, options: RequestInit) => {
+    fetch: async (url: string, options: any) => {
         try {
-            return fetchWrapper(url, options)
-        } catch (error) {
-            return Promise.reject(error as Error)
-        }
-    }
-})
+            const response = await axiosInstance.request({
+                data: options.body,
+                url,
+                ...options,
+            });
 
-export const wsClient = typeof window !== "undefined" ? createClient({
+            return { ...response, data: response.data };
+        } catch (error: any) {
+            const messages = error?.map((error: any) => error?.message)?.join("");
+            const code = error?.[0]?.extensions?.code;
+
+            return Promise.reject({
+                message: messages || JSON.stringify(error),
+                statusCode: code || 500,
+            });
+        }
+    },
+});
+
+export const wsClient = createClient({
     url: WS_URL,
-    connectionParams: () => {
-        const accessToken = localStorage.getItem("access_token");
-        return {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-
-            }
-        }
-    }
-}) : undefined
+    connectionParams: () => ({
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+    }),
+});
 
 export const dataProvider = graphqlDataProvider(client);
-export const liveProvider = wsClient ? graphqlLiveProvider(wsClient) : undefined;
+
+export const liveProvider = graphqlLiveProvider(wsClient);
