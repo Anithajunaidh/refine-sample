@@ -36,7 +36,6 @@ export const refreshTokens = async () => {
 
         localStorage.setItem("access_token", response.refreshToken.accessToken);
         localStorage.setItem("refresh_token", response.refreshToken.refreshToken);
-
         return response.refreshToken;
     } catch (error) {
         localStorage.removeItem("access_token");

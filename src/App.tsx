@@ -23,7 +23,6 @@ const WS_URL = "wss://api.nestjs-query.refine.dev/graphql";
 function App() {
   return (
     <BrowserRouter>
-      <GitHubBanner />
       <RefineKbarProvider>
         <AntdApp>
           <DevtoolsProvider>
